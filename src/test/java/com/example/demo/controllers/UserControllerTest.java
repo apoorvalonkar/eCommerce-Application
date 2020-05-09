@@ -37,7 +37,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void create_user_Happy_path() throws Exception{
+    public void test_create_user_Happy_path() {
 
         when(encoder.encode("testPassword")).thenReturn("thisIsHashed");
         //the above line is called stubbing, which replaces the code inside when with the value in thenReturn
@@ -61,7 +61,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void createUser_Invalid_password(){
+    public void test_createUser_Invalid_password(){
         when(encoder.encode("testPassword")).thenReturn("thisIshashed");
         CreateUserRequest createUserRequest= new CreateUserRequest();
         createUserRequest.setUsername("test");
@@ -74,7 +74,7 @@ public class UserControllerTest {
         assertEquals(200, response.getStatusCode().value());
     }
     @Test
-    public void create_user_mismatch_password()
+    public void test_create_user_mismatch_password()
     {
         when(encoder.encode("testPassword")).thenReturn("thisIsHashed");
 
@@ -90,7 +90,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void findByUsername_valid()
+    public void test_verifyFindByUsername_valid()
     {
         String username = "test";
 
@@ -115,7 +115,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void findByUsername_Invalid(){
+    public void test_findByUsername_Invalid(){
         when(encoder.encode("testPassword")).thenReturn("thisIsHashed");
         CreateUserRequest createUserRequest= new CreateUserRequest();
         createUserRequest.setUsername("useruser");
@@ -134,7 +134,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void TestFindbyId(){
+    public void test_FindByUserId(){
         when(encoder.encode("testPassword")).thenReturn("thisIsHashed");
         CreateUserRequest createUserRequest= new CreateUserRequest();
         createUserRequest.setUsername("useruser");
