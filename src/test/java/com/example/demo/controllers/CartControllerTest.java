@@ -19,158 +19,134 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 public class CartControllerTest {
     private CartController cartController;
 
-    private UserRepository userRepo=mock(UserRepository.class);
-    private ItemRepository itemRepo=mock(ItemRepository.class);
-    private CartRepository cartRepo=mock(CartRepository.class);
+    private UserRepository userRepository = mock(UserRepository.class);
+    private ItemRepository itemRepository = mock(ItemRepository.class);
+    private CartRepository cartRepository = mock(CartRepository.class);
 
     @Before
-    public void setUp() throws  Exception{
-        cartController= new CartController();
-        TestUtils.injectObject(cartController, "userRepository", userRepo);
-        TestUtils.injectObject(cartController, "itemRepository", itemRepo);
-        TestUtils.injectObject(cartController, "cartRepository", cartRepo);
+    public void setUp() {
+        cartController = new CartController();
+        TestUtils.injectObject(cartController, "userRepository", userRepository);
+        TestUtils.injectObject(cartController, "itemRepository", itemRepository);
+        TestUtils.injectObject(cartController, "cartRepository", cartRepository);
     }
 
     @Test
-    public void TestAddCart(){
-        Item item=new Item();
-        item.setId(1l);
-        item.setName("MacBook");
+    public void Test_addItemToCart() {
+        //Add item 1
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("MacBook Pro");
         item.setDescription("13 Gray");
         item.setPrice(BigDecimal.valueOf(1200.13));
 
-        Item item2=new Item();
-        item2.setId(2l);
-        item2.setName("MacBook");
-        item2.setDescription("13 Black");
-        item2.setPrice(BigDecimal.valueOf(1110.03));
+        //created a cart and add the item to cart
+        Cart cart = new Cart();
+        cart.setId(1L);
+        cart.addItem(item);
 
-        List<Item> listOfItems= new ArrayList<>();
-        listOfItems.add(item);
-        listOfItems.add(item2);
-
-        Cart cart= new Cart();
-        cart.setId(1l);
-        cart.setItems(listOfItems);
-        cart.setTotal(BigDecimal.valueOf(11230.03));
-
-        User user= new User();
-        user.setUsername("abc");
-        user.setPassword("abcdefg");
+        User user = new User();
+        user.setUsername("test");
+        user.setPassword("TestPassword");
         user.setCart(cart);
 
-        doReturn(user).when(userRepo).findByUsername(user.getUsername());
-        doReturn(Optional.of(item2)).when(itemRepo).findById(2l);
-        ModifyCartRequest modifyCartRequest=new ModifyCartRequest();
-        modifyCartRequest.setItemId(item2.getId());
-        modifyCartRequest.setQuantity(2);
+        doReturn(Optional.of(item)).when(itemRepository).findById(1L);
+        doReturn(user).when(userRepository).findByUsername(user.getUsername());
+
+        ModifyCartRequest modifyCartRequest = new ModifyCartRequest();
+        modifyCartRequest.setItemId(item.getId());
         modifyCartRequest.setUsername(user.getUsername());
+        modifyCartRequest.setQuantity(3);
 
-        final ResponseEntity<Cart> response= cartController.addTocart(modifyCartRequest);
+        ResponseEntity<Cart> response = cartController.addTocart(modifyCartRequest);
 
-        assertNotNull(response);
-        assertEquals(200,response.getStatusCode().value());
-        Cart responseBody= response.getBody();
-        assertEquals(4, responseBody.getItems().size());
+        assertEquals(200, response.getStatusCode().value());
+        //Item was successfully added to the cart for user
+        assertEquals(4, response.getBody().getItems().size());
+
     }
 
-
     @Test
-    public void TestRemoveCart(){
-        Item item=new Item();
-        item.setId(1l);
-        item.setName("MacBook");
+    public void Test_removeItemFromCart() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("MacBook Pro");
         item.setDescription("13 Gray");
-        item.setPrice(BigDecimal.valueOf(1200.13));
+        item.setPrice(BigDecimal.valueOf(1200.0));
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
 
-        Item item2=new Item();
-        item2.setId(2l);
-        item2.setName("MacBook");
-        item2.setDescription("13 Black");
-        item2.setPrice(BigDecimal.valueOf(1110.03));
+        //Add the item in the cart
+        Cart cart = new Cart();
+        cart.addItem(item);
+        cart.addItem(item);
+        cart.addItem(item);
+        cart.addItem(item);
 
-        List<Item> listOfItems= new ArrayList<>();
-        listOfItems.add(item);
-        listOfItems.add(item2);
-
-        Cart cart= new Cart();
-        cart.setId(1l);
-        cart.setItems(listOfItems);
-        cart.setTotal(BigDecimal.valueOf(11230.03));
-
-        User user= new User();
-        user.setUsername("abc");
-        user.setPassword("abcdefg");
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("test");
+        user.setPassword("TestPassword");
         user.setCart(cart);
+        when(userRepository.findByUsername("test")).thenReturn(user);
 
-
-        doReturn(user).when(userRepo).findByUsername(user.getUsername());
-        doReturn(Optional.of(item)).when(itemRepo).findById(1l);
-        doReturn(Optional.of(item2)).when(itemRepo).findById(2l);
-
-        ModifyCartRequest modifyCartRequest=new ModifyCartRequest();
-        modifyCartRequest.setItemId(item2.getId());
-        modifyCartRequest.setUsername(user.getUsername());
+        ModifyCartRequest modifyCartRequest = new ModifyCartRequest();
+        modifyCartRequest.setItemId(1L);
+        modifyCartRequest.setUsername("test");
         modifyCartRequest.setQuantity(1);
 
-        final ResponseEntity<Cart> response= cartController.removeFromcart(modifyCartRequest);
+        //remove 1 item from cart
+        ResponseEntity<Cart> response = cartController.removeFromcart(modifyCartRequest);
 
-        assertNotNull(response);
-        assertEquals(200,response.getStatusCode().value());
-        Cart responseBody= response.getBody();
-        System.out.println(responseBody);
-        assertEquals(1, responseBody.getItems().size());
-
-
+        assertEquals(200, response.getStatusCodeValue());
+        System.out.println("The number of items in cart: " + response.getBody().getItems().size());
+        assertEquals(3, response.getBody().getItems().size());
     }
 
-
     @Test
-    public void TestAddCartInvalidUser(){
-        Item item=new Item();
-        item.setId(1l);
-        item.setName("MacBook");
+    public void Test_addItemtoCartFromInvalidUser() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("MacBook Pro");
         item.setDescription("13 Gray");
         item.setPrice(BigDecimal.valueOf(1200.13));
 
-        Item item2=new Item();
-        item2.setId(2l);
-        item2.setName("MacBook");
+        Item item2 = new Item();
+        item2.setId(2L);
+        item2.setName("MacBook Air");
         item2.setDescription("13 Black");
         item2.setPrice(BigDecimal.valueOf(1110.03));
 
-        List<Item> listOfItems= new ArrayList<>();
+        List<Item> listOfItems = new ArrayList<>();
         listOfItems.add(item);
         listOfItems.add(item2);
 
-        Cart cart= new Cart();
-        cart.setId(1l);
+        Cart cart = new Cart();
+        cart.setId(1L);
         cart.setItems(listOfItems);
         cart.setTotal(BigDecimal.valueOf(11230.03));
 
-        User user= new User();
+        User user = new User();
         user.setUsername("abc");
-        user.setPassword("abcdefg");
+        user.setPassword("PassWord");
         user.setCart(cart);
 
-        doReturn(user).when(userRepo).findByUsername("xyz");
-        doReturn(Optional.of(item2)).when(itemRepo).findById(2l);
+        doReturn(user).when(userRepository).findByUsername("xyz");
+        doReturn(Optional.of(item2)).when(itemRepository).findById(2L);
 
-        ModifyCartRequest modifyCartRequest=new ModifyCartRequest();
+        ModifyCartRequest modifyCartRequest = new ModifyCartRequest();
         modifyCartRequest.setItemId(item2.getId());
         modifyCartRequest.setQuantity(2);
         modifyCartRequest.setUsername(user.getUsername());
 
-        final ResponseEntity<Cart> response= cartController.addTocart(modifyCartRequest);
+        final ResponseEntity<Cart> response = cartController.addTocart(modifyCartRequest);
 
         assertNotNull(response);
-        assertEquals(404,response.getStatusCode().value());
+        assertEquals(404, response.getStatusCode().value());
     }
 
 }
